@@ -119,7 +119,15 @@ exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awa
             });
         }
         if (type == "Youtube") {
-            const link = req.body.link;
+            console.log("Hello I am in youtube route");
+            // If the given link is website link
+            let link = req.body.link;
+            // If the given link is share link
+            if (!link.includes("watch")) {
+                const videoId = link.split('?')[0].split('/')[3];
+                link = `https://www.youtube.com/watch?v=${videoId}`;
+            }
+            console.log(link);
             const { title, description, channelName } = yield (0, helper_1.giveYoutubeInfo)(link);
             const embeddings = yield (0, helper_1.createEmbeddings)({
                 title,
@@ -142,7 +150,6 @@ exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awa
             });
         }
         if (type == "Twitter") {
-            // console.log("Hello");
             const link = req.body.link;
             const { description, creatorName } = yield (0, helper_1.giveTweetInfo)(link);
             const embeddings = yield (0, helper_1.createEmbeddings)({ description, creatorName });
@@ -203,7 +210,7 @@ exports.userRouter.post("/getRelatedMemories", user_1.userMiddleware, (req, res)
         // console.log(memoryEmbeddingScore);
         const memoriesToBeSent = memoryEmbeddingScore
             .slice(0, 10)
-            .filter((memory) => memory.score > 0.6)
+            .filter((memory) => memory.score > 0.5)
             .map((memory) => {
             const tempMemory = memory;
             delete tempMemory.embeddings;

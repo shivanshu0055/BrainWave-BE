@@ -10,7 +10,7 @@ function userMiddleware(req, res, next) {
     if (jwtToken) {
         try {
             const isValid = jsonwebtoken_1.default.verify(jwtToken, process.env.JWT_SECRET);
-            console.log(isValid);
+            // console.log(isValid);
             if (isValid) {
                 req.objectId = isValid.objectId;
                 next();

@@ -17,6 +17,7 @@ import {
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
+import { log } from "console";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -137,7 +138,9 @@ userRouter.post(
                     const videoId=link.split('?')[0].split('/')[3]
                     link=`https://www.youtube.com/watch?v=${videoId}`
                 }
-
+                
+                console.log(link);
+                
                 const { title, description, channelName } = await giveYoutubeInfo(link);
 
                 const embeddings = await createEmbeddings({

@@ -230,7 +230,7 @@ userRouter.post(
             
             const memoriesToBeSent = memoryEmbeddingScore
             .slice(0, 10)
-            .filter((memory) => memory.score > 0.6)
+            .filter((memory) => memory.score > 0.5)
             .map((memory) => {
                 const tempMemory=memory as { [key: string]: any };
                 delete tempMemory.embeddings

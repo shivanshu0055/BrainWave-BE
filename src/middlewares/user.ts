@@ -11,7 +11,7 @@ export function userMiddleware(req:extendedRequest,res:Response,next:NextFunctio
     if(jwtToken){
     try{
     const isValid=jwt.verify(jwtToken,process.env.JWT_SECRET as string) as JwtPayload
-    console.log(isValid);
+    // console.log(isValid);
     
     if(isValid){
         req.objectId=isValid.objectId

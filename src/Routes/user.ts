@@ -131,6 +131,8 @@ userRouter.post(
                 });
             }
             if (type == "Youtube") {
+                console.log("Hello I am in youtube route");
+                
                 // If the given link is website link
                 let link = req.body.link as string;
                 // If the given link is share link
@@ -138,7 +140,7 @@ userRouter.post(
                     const videoId=link.split('?')[0].split('/')[3]
                     link=`https://www.youtube.com/watch?v=${videoId}`
                 }
-                
+
                 console.log(link);
                 
                 const { title, description, channelName } = await giveYoutubeInfo(link);

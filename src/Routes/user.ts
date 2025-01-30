@@ -130,9 +130,16 @@ userRouter.post(
                 });
             }
             if (type == "Youtube") {
-                const link = req.body.link;
+                // If the given link is website link
+                let link = req.body.link as string;
+                // If the given link is share link
+                if(!link.includes("watch")){
+                    const videoId=link.split('?')[0].split('/')[3]
+                    link=`https://www.youtube.com/watch?v=${videoId}`
+                }
+
                 const { title, description, channelName } = await giveYoutubeInfo(link);
-                
+
                 const embeddings = await createEmbeddings({
                     title,
                     description,
@@ -156,11 +163,8 @@ userRouter.post(
                 });
             }
             if (type == "Twitter") {
-                // console.log("Hello");
-                
                 const link = req.body.link;
                 const { description, creatorName } = await giveTweetInfo(link)
-                
                 const embeddings = await createEmbeddings({ description, creatorName })
                 const newMemory = await memoryModel.create({
                     type: "Twitter",

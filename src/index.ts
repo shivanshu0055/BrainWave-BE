@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Load environment variables
+dotenv.config(); 
 import express from 'express';
 import mongoose from 'mongoose';
 import { userRouter } from './Routes/user';

@@ -15,17 +15,15 @@ import {
     giveYoutubeInfo,
 } from "../Scraping/helper";
 
+// Gemini Initialization
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import axios from "axios";
-import { log } from "console";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+// Signup route
 userRouter.post("/signup", async (req: Request, res: Response) => {
     try {
         const { username, password } = req.body;
-        // console.log(username,password);
-        
         const isAlreadySignedUp = await userModel.findOne({
             username: username,
         });
@@ -48,8 +46,8 @@ userRouter.post("/signup", async (req: Request, res: Response) => {
         }
     } catch (error: any) {
         console.log(error);
-        res.json({
-            Error: error,
+        res.status(200).json({
+            "Error": error,
         });
     }
 });
@@ -103,6 +101,7 @@ userRouter.post(
     "/addMemory",
     userMiddleware,
     async (req: extendedRequest, res: Response) => {
+
         const type = req.body.type;
         const creatorId = req.objectId;
         const currentTime = getTime();
@@ -125,23 +124,21 @@ userRouter.post(
                     type,
                 });
                 const memoryWithoutEmbeddings=newMemory.toObject() as {[key:string]:any}
+                // As embeddings are not needed in frontEnd
                 delete memoryWithoutEmbeddings.embeddings 
                 res.status(200).json({
                     NewMemory: memoryWithoutEmbeddings,
                 });
             }
             if (type == "Youtube") {
-                console.log("Hello I am in youtube route");
-                
                 // If the given link is website link
                 let link = req.body.link as string;
+
                 // If the given link is share link
                 if(!link.includes("watch")){
                     const videoId=link.split('?')[0].split('/')[3]
                     link=`https://www.youtube.com/watch?v=${videoId}`
                 }
-
-                console.log(link);
                 
                 const { title, description, channelName } = await giveYoutubeInfo(link);
 
@@ -160,15 +157,22 @@ userRouter.post(
                     creatorId: creatorId,
                     link: link,
                 });
-
+                
                 const memoryWithoutEmbeddings=newMemory.toObject() as {[key:string]:any}
+                // As embeddings are not needed in frontEnd
                 delete memoryWithoutEmbeddings.embeddings 
                 res.status(200).json({
                     NewMemory: memoryWithoutEmbeddings,
                 });
             }
             if (type == "Twitter") {
-                const link = req.body.link;
+                // If Website link
+                let link = req.body.link;
+                // If share link
+                if(link.includes('?')){
+                    link=link.split('?')[0]
+                }
+
                 const { description, creatorName } = await giveTweetInfo(link)
                 const embeddings = await createEmbeddings({ description, creatorName })
                 const newMemory = await memoryModel.create({
@@ -181,6 +185,7 @@ userRouter.post(
                     link: link
                 })
                 const memoryWithoutEmbeddings=newMemory.toObject() as {[key:string]:any}
+                // as embeddings are not required in frontned
                 delete memoryWithoutEmbeddings.embeddings 
                 res.status(200).json({
                     NewMemory: memoryWithoutEmbeddings,
@@ -202,6 +207,7 @@ userRouter.post(
                     logoUrl:logoUrl
                 })
                 const memoryWithoutEmbeddings=newMemory.toObject() as {[key:string]:any}
+                // as embeddings are not required in frontned
                 delete memoryWithoutEmbeddings.embeddings 
                 res.status(200).json({
                     NewMemory: memoryWithoutEmbeddings,
@@ -225,26 +231,24 @@ userRouter.post(
             const allMemories = await memoryModel.find({
                 creatorId: creatorId,
             });
-            //   console.log(allMemories);
 
             const queryEmbeddings = await createQueryEmbeddings(query);
-
+            // Creating array of memories along with their respective score
             const memoryEmbeddingScore = allMemories.map((memory) => ({
                 ...memory.toObject(),
                 score: cosineSimilarity(memory.embeddings, queryEmbeddings),
             }));
-
+            
+            // Sorting according to score in descending order
             memoryEmbeddingScore.sort((a, b) => b.score - a.score);
-            // console.log(memoryEmbeddingScore);
             
             const memoriesToBeSent = memoryEmbeddingScore
             .slice(0, 10)
-            .filter((memory) => memory.score > 0.5)
+            .filter((memory) => memory.score > 0.55)
             .map((memory) => {
                 const tempMemory=memory as { [key: string]: any };
                 delete tempMemory.embeddings
                 delete tempMemory.score
-                // console.log(tempMemory);
                 return tempMemory
             })
 
@@ -253,9 +257,8 @@ userRouter.post(
             });
 
         } catch (error) {
-            console.log(error);
             res.status(500).json({
-                Error: error,
+                "Error": error,
             });
         }
     }
@@ -265,36 +268,34 @@ userRouter.get("/getAllMemories",userMiddleware,async (req:extendedRequest,res:R
     const creatorId = req.objectId;
 
     try{
-    const allMemories=await memoryModel.find({
-        creatorId:creatorId
-    })
-    // console.log(allMemories);
-    
-    const memoriesWithoutEmbeddings=allMemories.map((memory)=>{
-        const tempMemory=memory.toObject() as { [key: string]: any };
-        delete tempMemory.embeddings;
-        // console.log(tempMemory);
-        return tempMemory
-    })
-    
-    res.status(200).json({
+        const allMemories=await memoryModel.find({
+            creatorId:creatorId
+        })
         
-        "allMemories":memoriesWithoutEmbeddings
-    })
+        const memoriesWithoutEmbeddings=allMemories.map((memory)=>{
+            const tempMemory=memory.toObject() as { [key: string]: any };
+            delete tempMemory.embeddings;
+            return tempMemory
+        })
+        
+        res.status(200).json({
+            
+            "allMemories":memoriesWithoutEmbeddings
+        })
     }
     catch(error){
-        res.json({
+        res.status(500).json({
             "Message":error
         })
     }
 })
 
 userRouter.post("/updateMemory",userMiddleware,async (req:extendedRequest,res:Response)=>{
-    // console.log("Hello");
     
     const memoryObjectId=req.body.memoryObjectId
     const creatorId = req.objectId;
     const currentState=req.body.currentState
+
     try{
     const updateInfo=await memoryModel.updateOne({
         _id:memoryObjectId,
@@ -302,22 +303,24 @@ userRouter.post("/updateMemory",userMiddleware,async (req:extendedRequest,res:Re
     },{$set:{
         bookmark:!currentState
     }})
+
     res.status(200).json({
         "UpdateInfo":updateInfo
     })
     }
     catch(error){
-        console.log(error);
+        res.status(500).json({
+            "Error":error
+        })
     }
     
 })
 
 userRouter.post("/deleteMemory",userMiddleware,async (req:extendedRequest,res:Response)=>{
-    // console.log("Hello");
     
     const memoryObjectId=req.body.memoryObjectId
     const creatorId = req.objectId;
-    // const currentState=req.body.currentState
+    
     try{
     const deleteInfo=await memoryModel.deleteOne({
         _id:memoryObjectId,
@@ -328,22 +331,25 @@ userRouter.post("/deleteMemory",userMiddleware,async (req:extendedRequest,res:Re
     })
     }
     catch(error){
-        console.log(error);
+        res.status(500).json({
+            "Error":error
+        })
     }
-    
 })
 
 userRouter.post("/askGemini",userMiddleware,async(req:extendedRequest,res:Response)=>{
-    console.log("Hello");
-    
-    const creatorId=req.objectId
     const prompt=req.body.prompt
-    console.log(prompt);
-    
+    try{
     const result = await model.generateContent(prompt);
     console.log(result.response.text());
      result.response.text()
-    res.json({
+    res.status(200).json({
         "Response":result.response.text()
     })
+    }
+    catch(error){
+        res.status(500).json({
+            "Error":error
+        })
+    }
 })

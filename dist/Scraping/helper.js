@@ -50,7 +50,6 @@ function createEmbeddings(memoryInfo) {
         ${memoryInfo.creatorName ? `Creator: ${memoryInfo.creatorName}` : ""}
     `;
         const result = yield model.embedContent(input.trim());
-        // console.log(result.embedding);
         return result.embedding.values;
     });
 }
@@ -72,11 +71,9 @@ function giveYoutubeInfo(link) {
         const apiKey = process.env.YOUTUBE_API_KEY;
         const res = yield axios_1.default.get(`https://www.googleapis.com/youtube/v3/videos?id=${id}&key=${apiKey}&part=snippet`);
         const data = res.data;
-        // console.log(res.data.items[0].snippet);
         const title = data.items[0].snippet.title;
         const description = data.items[0].snippet.description;
         const channelName = data.items[0].snippet.channelTitle;
-        // console.log(description);
         return { title, description, channelName };
     });
 }
@@ -97,19 +94,10 @@ function giveTweetInfo(link) {
             }
         });
         yield page.goto(link, { waitUntil: "domcontentloaded" });
-        // const tweet=await page.evaluate(()=>{
-        //     const tweetTextDiv= document.querySelector('div[data-testid="tweetText"]');
-        //     const usernameTextDiv= document.querySelector('div[data-testid="User-Name"]');
-        //     //@ts-ignore
-        //     return {tweetText:tweetTextDiv.innerText,username:usernameTextDiv.innerText}
-        // })
-        // await new Promise((r)=>setTimeout(r,5000))
         yield page.waitForSelector('div[data-testid="tweetText"]', { visible: true });
         yield page.waitForSelector('div[data-testid="User-Name"]', { visible: true });
         const tweet = yield page.$eval('div[data-testid="tweetText"]', el => el.innerText).catch(() => "N/A");
         const username = yield page.$eval('div[data-testid="User-Name"]', el => el.innerText).catch(() => "N/A");
-        // console.log(tweet);
-        console.log(tweet);
         yield browser.close();
         return { description: tweet, creatorName: username };
     });
@@ -117,8 +105,8 @@ function giveTweetInfo(link) {
 function giveWebsiteInfo(link) {
     return __awaiter(this, void 0, void 0, function* () {
         const browser = yield puppeteer_extra_1.default.launch({
-            headless: true, // Faster headless mode
-            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Speeds up execution
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = yield browser.newPage();
         yield page.setRequestInterception(true);
@@ -131,28 +119,10 @@ function giveWebsiteInfo(link) {
             }
         });
         yield page.goto(link, { waitUntil: "domcontentloaded" });
-        // const info=await page.evaluate(()=>{
-        //     const title= document.title
-        //     const descriptionTag = document.querySelector('meta[name="description"]')
-        //     const description=descriptionTag?.getAttribute('content')
-        //     const logoUrlTagOption1=document.querySelector('meta[property="og:image"]')
-        //     const logoUrl1=logoUrlTagOption1?.getAttribute('content')
-        //     const logoUrlTagOption2=document.querySelector('meta[name="twitter:image"]')
-        //     const logoUrl2=logoUrlTagOption2?.getAttribute('content')
-        //     // console.log(descriptionTag);
-        //     // console.log("Hello");
-        //     return {title,description:description||"N/A",logoUrl:logoUrl1||logoUrl2||"N/A"}
-        // })
         const titlee = yield page.title();
         const descriptionn = yield page.$eval('meta[name="description"]', el => el.content).catch(() => "N/A");
         const logoUrl1 = yield page.$eval('meta[name="og:image"', el => el.content).catch(() => undefined);
         const logoUrl2 = yield page.$eval('meta[name="twitter:image"', el => el.content).catch(() => undefined);
-        // console.log(info.title);
-        // console.log(info.description);
-        // console.log(info.logoUrl);
-        console.log(descriptionn);
-        console.log(logoUrl1 || logoUrl2 || "N/A");
-        console.log(titlee);
         yield browser.close();
         return { title: titlee, description: descriptionn, logoUrl: logoUrl1 || logoUrl2 || "N/A" };
     });

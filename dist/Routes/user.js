@@ -20,13 +20,14 @@ const db_1 = require("../db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_1 = require("../middlewares/user");
 const helper_1 = require("../Scraping/helper");
+// Gemini Initialization
 const generative_ai_1 = require("@google/generative-ai");
 const genAI = new generative_ai_1.GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// Signup route
 exports.userRouter.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { username, password } = req.body;
-        // console.log(username,password);
         const isAlreadySignedUp = yield db_1.userModel.findOne({
             username: username,
         });
@@ -51,8 +52,8 @@ exports.userRouter.post("/signup", (req, res) => __awaiter(void 0, void 0, void 
     }
     catch (error) {
         console.log(error);
-        res.json({
-            Error: error,
+        res.status(200).json({
+            "Error": error,
         });
     }
 }));
@@ -113,13 +114,13 @@ exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awa
                 type,
             });
             const memoryWithoutEmbeddings = newMemory.toObject();
+            // As embeddings are not needed in frontEnd
             delete memoryWithoutEmbeddings.embeddings;
             res.status(200).json({
                 NewMemory: memoryWithoutEmbeddings,
             });
         }
         if (type == "Youtube") {
-            console.log("Hello I am in youtube route");
             // If the given link is website link
             let link = req.body.link;
             // If the given link is share link
@@ -127,7 +128,6 @@ exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awa
                 const videoId = link.split('?')[0].split('/')[3];
                 link = `https://www.youtube.com/watch?v=${videoId}`;
             }
-            console.log(link);
             const { title, description, channelName } = yield (0, helper_1.giveYoutubeInfo)(link);
             const embeddings = yield (0, helper_1.createEmbeddings)({
                 title,
@@ -144,13 +144,19 @@ exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awa
                 link: link,
             });
             const memoryWithoutEmbeddings = newMemory.toObject();
+            // As embeddings are not needed in frontEnd
             delete memoryWithoutEmbeddings.embeddings;
             res.status(200).json({
                 NewMemory: memoryWithoutEmbeddings,
             });
         }
         if (type == "Twitter") {
-            const link = req.body.link;
+            // If Website link
+            let link = req.body.link;
+            // If share link
+            if (link.includes('?')) {
+                link = link.split('?')[0];
+            }
             const { description, creatorName } = yield (0, helper_1.giveTweetInfo)(link);
             const embeddings = yield (0, helper_1.createEmbeddings)({ description, creatorName });
             const newMemory = yield db_1.memoryModel.create({
@@ -163,6 +169,7 @@ exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awa
                 link: link
             });
             const memoryWithoutEmbeddings = newMemory.toObject();
+            // as embeddings are not required in frontned
             delete memoryWithoutEmbeddings.embeddings;
             res.status(200).json({
                 NewMemory: memoryWithoutEmbeddings,
@@ -184,6 +191,7 @@ exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awa
                 logoUrl: logoUrl
             });
             const memoryWithoutEmbeddings = newMemory.toObject();
+            // as embeddings are not required in frontned
             delete memoryWithoutEmbeddings.embeddings;
             res.status(200).json({
                 NewMemory: memoryWithoutEmbeddings,
@@ -203,19 +211,18 @@ exports.userRouter.post("/getRelatedMemories", user_1.userMiddleware, (req, res)
         const allMemories = yield db_1.memoryModel.find({
             creatorId: creatorId,
         });
-        //   console.log(allMemories);
         const queryEmbeddings = yield (0, helper_1.createQueryEmbeddings)(query);
+        // Creating array of memories along with their respective score
         const memoryEmbeddingScore = allMemories.map((memory) => (Object.assign(Object.assign({}, memory.toObject()), { score: (0, helper_1.cosineSimilarity)(memory.embeddings, queryEmbeddings) })));
+        // Sorting according to score in descending order
         memoryEmbeddingScore.sort((a, b) => b.score - a.score);
-        // console.log(memoryEmbeddingScore);
         const memoriesToBeSent = memoryEmbeddingScore
             .slice(0, 10)
-            .filter((memory) => memory.score > 0.5)
+            .filter((memory) => memory.score > 0.55)
             .map((memory) => {
             const tempMemory = memory;
             delete tempMemory.embeddings;
             delete tempMemory.score;
-            // console.log(tempMemory);
             return tempMemory;
         });
         res.json({
@@ -223,9 +230,8 @@ exports.userRouter.post("/getRelatedMemories", user_1.userMiddleware, (req, res)
         });
     }
     catch (error) {
-        console.log(error);
         res.status(500).json({
-            Error: error,
+            "Error": error,
         });
     }
 }));
@@ -235,11 +241,9 @@ exports.userRouter.get("/getAllMemories", user_1.userMiddleware, (req, res) => _
         const allMemories = yield db_1.memoryModel.find({
             creatorId: creatorId
         });
-        // console.log(allMemories);
         const memoriesWithoutEmbeddings = allMemories.map((memory) => {
             const tempMemory = memory.toObject();
             delete tempMemory.embeddings;
-            // console.log(tempMemory);
             return tempMemory;
         });
         res.status(200).json({
@@ -247,13 +251,12 @@ exports.userRouter.get("/getAllMemories", user_1.userMiddleware, (req, res) => _
         });
     }
     catch (error) {
-        res.json({
+        res.status(500).json({
             "Message": error
         });
     }
 }));
 exports.userRouter.post("/updateMemory", user_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // console.log("Hello");
     const memoryObjectId = req.body.memoryObjectId;
     const creatorId = req.objectId;
     const currentState = req.body.currentState;
@@ -269,14 +272,14 @@ exports.userRouter.post("/updateMemory", user_1.userMiddleware, (req, res) => __
         });
     }
     catch (error) {
-        console.log(error);
+        res.status(500).json({
+            "Error": error
+        });
     }
 }));
 exports.userRouter.post("/deleteMemory", user_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // console.log("Hello");
     const memoryObjectId = req.body.memoryObjectId;
     const creatorId = req.objectId;
-    // const currentState=req.body.currentState
     try {
         const deleteInfo = yield db_1.memoryModel.deleteOne({
             _id: memoryObjectId,
@@ -287,18 +290,24 @@ exports.userRouter.post("/deleteMemory", user_1.userMiddleware, (req, res) => __
         });
     }
     catch (error) {
-        console.log(error);
+        res.status(500).json({
+            "Error": error
+        });
     }
 }));
 exports.userRouter.post("/askGemini", user_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Hello");
-    const creatorId = req.objectId;
     const prompt = req.body.prompt;
-    console.log(prompt);
-    const result = yield model.generateContent(prompt);
-    console.log(result.response.text());
-    result.response.text();
-    res.json({
-        "Response": result.response.text()
-    });
+    try {
+        const result = yield model.generateContent(prompt);
+        console.log(result.response.text());
+        result.response.text();
+        res.status(200).json({
+            "Response": result.response.text()
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            "Error": error
+        });
+    }
 }));

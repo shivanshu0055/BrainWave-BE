@@ -8,12 +8,11 @@ import {
     cosineSimilarity,
     createEmbeddings,
     createQueryEmbeddings,
-    getDate,
-    getTime,
     giveTweetInfo,
     giveWebsiteInfo,
     giveYoutubeInfo,
 } from "../Scraping/helper";
+import { getTime,getDate } from "../Scraping/helper";
 
 // Gemini Initialization
 import { GoogleGenerativeAI } from "@google/generative-ai";

@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import axios from 'axios';
+import { log } from 'console';
 puppeteer.use(StealthPlugin());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
@@ -18,10 +19,13 @@ dayjs.extend(timezone);
 const x = dayjs().tz('Asia/Kolkata');
 
 export function getTime(){
+    // console.log(x.format('HH:mm:ss'));
     return x.format('HH:mm:ss')
+    
 }
 
 export function getDate(){
+    // console.log(x.format('DD-MM-YYYY'));
     return x.format('DD-MM-YYYY')
 }
 

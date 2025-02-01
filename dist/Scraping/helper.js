@@ -34,11 +34,14 @@ const model = genAI.getGenerativeModel({
 });
 dayjs_1.default.extend(utc_1.default);
 dayjs_1.default.extend(timezone_1.default);
-const x = (0, dayjs_1.default)().tz('Asia/Kolkata');
 function getTime() {
+    // console.log(x.format('HH:mm:ss'));
+    const x = (0, dayjs_1.default)().tz('Asia/Kolkata');
     return x.format('HH:mm:ss');
 }
 function getDate() {
+    // console.log(x.format('DD-MM-YYYY'));
+    const x = (0, dayjs_1.default)().tz('Asia/Kolkata');
     return x.format('DD-MM-YYYY');
 }
 function createEmbeddings(memoryInfo) {

@@ -16,16 +16,18 @@ const model = genAI.getGenerativeModel({
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const x = dayjs().tz('Asia/Kolkata');
+
 
 export function getTime(){
     // console.log(x.format('HH:mm:ss'));
+    const x = dayjs().tz('Asia/Kolkata');
     return x.format('HH:mm:ss')
     
 }
 
 export function getDate(){
     // console.log(x.format('DD-MM-YYYY'));
+    const x = dayjs().tz('Asia/Kolkata');
     return x.format('DD-MM-YYYY')
 }
 

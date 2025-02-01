@@ -20,6 +20,7 @@ const db_1 = require("../db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_1 = require("../middlewares/user");
 const helper_1 = require("../Scraping/helper");
+const helper_2 = require("../Scraping/helper");
 // Gemini Initialization
 const generative_ai_1 = require("@google/generative-ai");
 const genAI = new generative_ai_1.GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -95,8 +96,8 @@ exports.userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 
 exports.userRouter.post("/addMemory", user_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const type = req.body.type;
     const creatorId = req.objectId;
-    const currentTime = (0, helper_1.getTime)();
-    const currentDate = (0, helper_1.getDate)();
+    const currentTime = (0, helper_2.getTime)();
+    const currentDate = (0, helper_2.getDate)();
     try {
         if (type == "Note") {
             const { title, description } = req.body;
